@@ -3,24 +3,39 @@
 ## When using a parent image, you are using an existing image on which you base a new one.
 ## Using a base image means you are starting from scratch - use FROM scratch
 
-#???????????? I don’t know which parent image to use for your Java app ??????????????????
-#Link refer: https://tomd.xyz/java-docker-parent-image/
+# ???????????? I don’t know which parent image to use for your Java app ??????????????????
+#L ink refer: https://tomd.xyz/java-docker-parent-image/
 
-FROM maven:3.8-openjdk-8 as build
+FROM openjdk:8-jdk-alpine
 
-##Specifies the author of the image
-MAINTAINER lethaiduy0202@gmail.com
+## Specifies the author of the image
+LABEL maintainer="lethaiduy0202@gmail.com"
 
 
 ## Sets the working directory for any RUN, CMD, ENTRYPOINT, COPY and ADD instructions that follow it in the Dockerfile.
 WORKDIR /app
-
-#Format: COPY <src> <dest>
+# Format: COPY <src> <dest>
 # copies new files or directories from <src> and adds them to the filesystem of the container at the path <dest>
-COPY
+COPY pom.xml /app/
 
-##provide defaults for an executing container.
-##format: ["executable","param1","param2"]
+
+# Install maven
+RUN apk add --no-cache maven
+
+# Run mvn clean install to build the project and download dependencies
+RUN mvn clean install -Dlicense.skip=true
+
+# Use an existing image for Jetty as the base image
+FROM jetty:9.4.50-jre8
+
+# Copy the built jar file from the previous image to the Jetty image
+# COPY /app/*.war /var/lib/jetty/webapps/
+
+# Expose port 9999
+EXPOSE 9999
+
+## provide defaults for an executing container.
+## format: ["executable","param1","param2"]
 CMD ["mvn","jetty:run","-Djetty.http.port=9999"]
 
 
@@ -28,7 +43,6 @@ CMD ["mvn","jetty:run","-Djetty.http.port=9999"]
 #EXPOSE
 #ENV
 #ADD
-#RUN
 #ENTRYPOINT
 #VOLUME
 #USER
